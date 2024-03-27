@@ -37,6 +37,7 @@
               (callPackage ./pkgs/svt-av1-psy.nix { })
               mediainfo
               python
+              mkvtoolnix-cli
             ];
           };
         }
