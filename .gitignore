@@ -1,2 +1,4 @@
 *.mkv
 /.direnv/
+*.opus
+*.log

@@ -2,7 +2,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    vs-overlay.url = "github:nix-community/vs-overlay";
+    vs-overlay = {
+      url = "github:nix-community/vs-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = { self, nixpkgs, flake-utils, vs-overlay }:
     flake-utils.lib.eachDefaultSystem
@@ -17,10 +20,11 @@
             pkgs.ffms
           ];
 
-          python= pkgs.python3.withPackages
+          python = pkgs.python3.withPackages
             (ps: with ps; [
               multiprocess
               pymediainfo
+              watchdog
             ]
             );
         in
