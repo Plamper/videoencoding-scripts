@@ -1,5 +1,4 @@
 import os
-import sys
 import subprocess
 from pymediainfo import MediaInfo
 import queue
@@ -7,12 +6,13 @@ import threading
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import logging
+import re
 
 
-def process_single_file(
-    filename, ffmpeg_audio_options, ffmpeg_video_options, output_filename
-):
+def process_single_file(filename, ffmpeg_video_options, output_filename):
     media_info = MediaInfo.parse(filename)
+
+    ffmpeg_audio_options = build_ffmpeg_options(media_info)
 
     # lsmash does not work with vc-1
     is_vc1 = media_info.video_tracks[0].format == "VC-1"
@@ -38,7 +38,7 @@ def process_single_file(
         # "-an",
         ffmpeg_audio_options,
         "-v",
-        "--preset 4 --tune 3 --keyint 0 --enable-variance-boost 1 --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --lp 2 --scd 0 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1",
+        "--preset 4  --crf 20 --tune 3 --keyint 0 --enable-variance-boost 1 --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --lp 2 --scd 0 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1",
     ]
 
     if is_vc1:
@@ -79,8 +79,8 @@ def format_copy_string(track_id: int) -> str:
     return f"-c:a:{track_id} copy "
 
 
-def get_bitrate(media_info: MediaInfo, track_id: int) -> int:
-    channels = media_info.audio_tracks[track_id].channel_s
+def get_bitrate(track) -> int:
+    channels = track.channel_s
     match channels:
         case 2:
             return 128
@@ -97,34 +97,35 @@ def get_bitrate(media_info: MediaInfo, track_id: int) -> int:
 def build_ffmpeg_options(media_info: MediaInfo) -> str:
     '''Build string of the form:
     -c:a:0 libopus -b:a:0 128k -filter:a:0 aformat=channel_layouts="7.1|5.1|stereo"'''
-    en_track = find_relevant_audio_tracks(media_info, "en")
-    de_track = find_relevant_audio_tracks(media_info, "de")
+    # en_track = find_relevant_audio_tracks(media_info, "en")
+    # de_track = find_relevant_audio_tracks(media_info, "de")
 
     options = ""
 
-    if en_track:
-        track_id = en_track[1]
-        if en_track[0]:
-            bitrate = get_bitrate(track_id)
-            options += format_opus_string(track_id, bitrate)
-        else:
-            options += format_copy_string(track_id)
+    pattern = r"atmos"
 
-    if de_track:
-        track_id = de_track[1]
-        if de_track[0]:
-            bitrate = get_bitrate(track_id)
+    track_id = 0
+    for track in media_info.audio_tracks:
+        # Do not reencode Atmos tracks as object Data is lost
+        # Thanks Dolby!!!
+        is_atmos = re.search(pattern, track.commercial_name, re.IGNORECASE)
+        if track.compression_mode.lower() == "lossless" and not is_atmos:
+            bitrate = get_bitrate(track)
             options += format_opus_string(track_id, bitrate)
         else:
             options += format_copy_string(track_id)
+        track_id += 1
+
     return options
 
 
-def process_queue(file_queue):
+def process_queue(file_queue, in_folder, out_folder):
     while True:
         if not file_queue.empty():
             file_path = file_queue.get()
-            process_single_file(file_path[0], "", "", file_path[1])
+            in_path = os.path.join(in_folder, file_path)
+            out_path = os.path.join(out_folder, file_path)
+            process_single_file(in_path, "", out_path)
             file_queue.task_done()
 
 
@@ -135,12 +136,10 @@ class NewFileHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             return
-        logging.info(f"New file detected: {event.src_path}")
-        self.file_queue.put(event.src_path)
+        file_name = os.path.basename(event.src_path)
+        logging.info(f"New file detected: {file_name}")
+        self.file_queue.put(file_name)
 
-
-if len(sys.argv) != 3:
-    print("Usage: python encodeav1.py inputfolder outputfolder")
 
 logging.basicConfig(
     filename="encodeav1.log",
@@ -149,22 +148,21 @@ logging.basicConfig(
     format="%(asctime)s - %(message)s",
 )
 
-in_folder: str = sys.argv[1]
-out_folder: str = sys.argv[2]
+in_folder: str = "in"
+out_folder: str = "out"
 
 file_queue = queue.Queue()
 
 logging.info("Searching for Files")
 for file_name in os.listdir(in_folder):
-    in_file_path = os.path.join(in_folder, file_name)
-    logging.info(f"File detected: {in_file_path}")
-    out_file_path = os.path.join(out_folder, file_name)
-    if os.path.isfile(in_file_path):
-        file_queue.put((in_file_path, out_file_path))
+    if os.path.isfile(os.path.join(in_folder, file_name)):
+        logging.info(f"File detected: {file_name}")
+        file_queue.put(file_name)
+
 
 # Start processing thread
 processing_thread = threading.Thread(
-    target=process_queue, args=(file_queue,), daemon=True
+    target=process_queue, args=(file_queue, in_folder, out_folder), daemon=True
 )
 processing_thread.start()
 

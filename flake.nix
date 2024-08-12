@@ -27,6 +27,8 @@
               watchdog
             ]
             );
+          svt-psy = pkgs.callPackage ./pkgs/svt-av1-psy.nix { };
+          libaom-psy101 = pkgs.callPackage ./pkgs/aom-psy101.nix { };
         in
         with pkgs;
         {
@@ -37,11 +39,21 @@
               rav1e
               ffmpeg-full
               vapour
-              (callPackage ./pkgs/av1an.nix { vapoursynth = vapour; })
-              (callPackage ./pkgs/svt-av1-psy.nix { })
+              (av1an.override {
+                withAom = true;
+                withSvtav1 = true;
+                withVmaf = true;
+                libaom = libaom-psy101;
+                svt-av1 = svt-psy;
+                av1an-unwrapped = pkgs.av1an-unwrapped.override {
+                  vapoursynth = vapour;
+                  libaom = libaom-psy101;
+                };
+              })
               mediainfo
               python
               mkvtoolnix-cli
+              libaom-psy101
             ];
           };
         }
