@@ -27,8 +27,8 @@
               watchdog
             ]
             );
-          svt-psy = pkgs.callPackage ./pkgs/svt-av1-psy.nix { };
-          libaom-psy101 = pkgs.callPackage ./pkgs/aom-psy101.nix { };
+          # svt-psy = pkgs.callPackage ./pkgs/svt-av1-psy.nix { };
+          # libaom-psy101 = pkgs.callPackage ./pkgs/aom-psy101.nix { };
         in
         with pkgs;
         {
@@ -36,6 +36,7 @@
             buildInputs = [
               opusTools
               libaom
+              svt-av1
               rav1e
               ffmpeg-full
               vapour
@@ -43,17 +44,19 @@
                 withAom = true;
                 withSvtav1 = true;
                 withVmaf = true;
-                libaom = libaom-psy101;
-                svt-av1 = svt-psy;
+                withRav1e = true;
+                # libaom = libaom-psy101;
+                # svt-av1 = svt-psy;
                 av1an-unwrapped = pkgs.av1an-unwrapped.override {
                   vapoursynth = vapour;
-                  libaom = libaom-psy101;
+                #   libaom = libaom-psy101;
                 };
               })
               mediainfo
               python
               mkvtoolnix-cli
-              libaom-psy101
+              # libaom-psy101
+              # svt-psy
             ];
           };
         }

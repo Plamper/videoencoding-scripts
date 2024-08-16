@@ -23,6 +23,9 @@ stdenv.mkDerivation (finalAttrs: {
 
   cmakeFlags = [
     "-DSVT_AV1_LTO=ON"
+    "-DCMAKE_CXX_FLAGS=-O3"
+    "-DCMAKE_C_FLAGS=-O3"
+    "-DCMAKE_LD_FLAGS=-O3"
   ];
 
 

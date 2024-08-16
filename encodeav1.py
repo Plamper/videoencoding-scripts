@@ -37,8 +37,17 @@ def process_single_file(filename, ffmpeg_video_options, output_filename):
         "-a",
         # "-an",
         ffmpeg_audio_options,
+        # "--vmaf-filter",
+        # ffmpeg_video_options,
+        # "--target-quality",
+        # "96",
+        # "--min-q",
+        # "40",
+        # "--max-q",
+        # "16",
+        # --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 will force BT709
         "-v",
-        "--preset 4  --crf 20 --tune 3 --keyint 0 --enable-variance-boost 1 --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --lp 2 --scd 0 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1",
+        "--preset 4 --crf 20 --tune 0 --keyint 0 --enable-variance-boost 1 --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --film-grain-denoise 0 --lp 2 --scd 0 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 --enable-qm 1 --qm-min 0 --input-depth 10",
     ]
 
     if is_vc1:
@@ -125,7 +134,7 @@ def process_queue(file_queue, in_folder, out_folder):
             file_path = file_queue.get()
             in_path = os.path.join(in_folder, file_path)
             out_path = os.path.join(out_folder, file_path)
-            process_single_file(in_path, "", out_path)
+            process_single_file(in_path, "-vf crop=1920:960:0:60", out_path)
             file_queue.task_done()
 
 
@@ -155,7 +164,10 @@ file_queue = queue.Queue()
 
 logging.info("Searching for Files")
 for file_name in os.listdir(in_folder):
-    if os.path.isfile(os.path.join(in_folder, file_name)):
+    if (
+        os.path.isfile(os.path.join(in_folder, file_name))
+        and not file_name == "put_input_files_here"
+    ):
         logging.info(f"File detected: {file_name}")
         file_queue.put(file_name)
 
