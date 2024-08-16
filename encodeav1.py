@@ -15,10 +15,14 @@ def process_single_file(filename, ffmpeg_video_options, output_filename):
     ffmpeg_audio_options = build_ffmpeg_options(media_info)
 
     # lsmash does not work with vc-1
-    is_vc1 = media_info.video_tracks[0].format == "VC-1"
+    # is_vc1 = media_info.video_tracks[0].format == "VC-1"
 
     av1an_args = [
         "av1an",
+        "-i",
+        filename,
+        "-o",
+        output_filename,
         "-x",
         "240",
         "-w",
@@ -28,6 +32,8 @@ def process_single_file(filename, ffmpeg_video_options, output_filename):
         "-c",
         "mkvmerge",
         "--resume",
+        "-m",
+        "ffms2",
         # "--photon-noise",
         # "15",
         "--verbose",
@@ -49,11 +55,6 @@ def process_single_file(filename, ffmpeg_video_options, output_filename):
         "-v",
         "--preset 4 --crf 20 --tune 0 --keyint 0 --enable-variance-boost 1 --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --film-grain-denoise 0 --lp 2 --scd 0 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 --enable-qm 1 --qm-min 0 --input-depth 10",
     ]
-
-    if is_vc1:
-        av1an_args += ["-m", "ffms2"]
-    else:
-        av1an_args += ["-m", "lsmash"]
 
     av1an_args += ["-i", filename]
 
