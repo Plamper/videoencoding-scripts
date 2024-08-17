@@ -56,10 +56,6 @@ def process_single_file(filename, ffmpeg_video_options, output_filename):
         "--preset 4 --crf 20 --tune 0 --keyint 0 --enable-variance-boost 1 --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --film-grain-denoise 0 --lp 2 --scd 0 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 --enable-qm 1 --qm-min 0 --input-depth 10",
     ]
 
-    av1an_args += ["-i", filename]
-
-    av1an_args += ["-o", output_filename]
-
     av1an_process = subprocess.Popen(av1an_args)
 
     logging.info("Executing: {c}".format(c=av1an_args))
