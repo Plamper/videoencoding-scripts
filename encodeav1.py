@@ -46,15 +46,15 @@ def process_single_file(filename, ffmpeg_video_options, output_filename):
         ffmpeg_audio_options,
         # "--vmaf-filter",
         # ffmpeg_video_options,
-        # "--target-quality",
-        # "96",
-        # "--min-q",
-        # "40",
-        # "--max-q",
-        # "16",
+        "--target-quality",
+        "96",
+        "--min-q",
+        "40",
+        "--max-q",
+        "16",
         # --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 will force BT709
         "-v",
-        "--preset 4 --crf 20 --tune 0 --keyint 0 --enable-variance-boost 1 --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --film-grain-denoise 0 --lp 2 --scd 0 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 --enable-qm 1 --qm-min 0 --input-depth 10",
+        "--preset 4 --crf 20  --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --lp 2 --keyint 0 --scd 0 --input-depth 10 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 ",
     ]
 
     av1an_process = subprocess.Popen(av1an_args)

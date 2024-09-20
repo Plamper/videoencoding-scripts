@@ -26,6 +26,7 @@
               watchdog
             ]
             );
+          svt-av1-psy = pkgs.callPackage ./pkgs/svt-av1-psy.nix {};
         in
         with pkgs;
         {
@@ -33,7 +34,7 @@
             buildInputs = [
               opusTools
               libaom
-              svt-av1
+              svt-av1-psy
               rav1e
               ffmpeg-full
               vapour
@@ -42,6 +43,8 @@
                 withSvtav1 = true;
                 withVmaf = true;
                 withRav1e = true;
+                svt-av1 = svt-av1-psy;
+                vapoursynth = vapour;
                 av1an-unwrapped = pkgs.av1an-unwrapped.override {
                   vapoursynth = vapour;
                 };
@@ -49,6 +52,7 @@
               mediainfo
               python
               mkvtoolnix-cli
+              ffms
             ];
           };
         }
