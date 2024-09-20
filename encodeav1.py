@@ -27,6 +27,7 @@ def process_single_file(filename, ffmpeg_video_options, output_filename):
         "240",
         "-w",
         "12",
+        "--set-thread-affinity=2",
         "-e",
         "svt-av1",
         "-c",
