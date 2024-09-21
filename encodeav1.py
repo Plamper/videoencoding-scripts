@@ -188,7 +188,7 @@ def get_crop_parameters(video_file, media_info, num_samples=5):
 
     if all(x == crop_params_list[0] for x in crop_params_list):
         logging.info("All Crops are identical cropping Video")
-        return f"crop={crop_params}"
+        return f"-vf crop={crop_params}"
     logging.info("Crops differ not cropping Video")
     return ""
 
