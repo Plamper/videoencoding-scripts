@@ -44,14 +44,6 @@ def process_single_file(filename, ffmpeg_video_options, output_filename):
         "-a",
         # "-an",
         ffmpeg_audio_options,
-        # "--vmaf-filter",
-        # ffmpeg_video_options,
-        "--target-quality",
-        "96",
-        "--min-q",
-        "40",
-        "--max-q",
-        "16",
         # --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 will force BT709
         "-v",
         "--preset 4 --crf 20  --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --lp 2 --keyint 0 --scd 0 --input-depth 10 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 ",
@@ -132,7 +124,7 @@ def process_queue(file_queue, in_folder, out_folder):
             file_path = file_queue.get()
             in_path = os.path.join(in_folder, file_path)
             out_path = os.path.join(out_folder, file_path)
-            process_single_file(in_path, "-vf crop=1920:960:0:60", out_path)
+            process_single_file(in_path, "", out_path)
             file_queue.task_done()
 
 
