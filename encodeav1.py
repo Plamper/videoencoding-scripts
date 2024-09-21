@@ -216,10 +216,9 @@ class NewFileHandler(FileSystemEventHandler):
 
 
 logging.basicConfig(
-    filename="encodeav1.log",
-    filemode="a",
     level=logging.INFO,
     format="%(asctime)s - %(message)s",
+    handlers=[logging.FileHandler("encodeav1.log"), logging.StreamHandler()],
 )
 
 in_folder: str = "in"
