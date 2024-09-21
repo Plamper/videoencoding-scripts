@@ -7,15 +7,17 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import logging
 import re
+import random
 
 
-def process_single_file(filename, ffmpeg_video_options, output_filename):
+def process_single_file(filename, output_filename):
     media_info = MediaInfo.parse(filename)
 
     ffmpeg_audio_options = build_ffmpeg_options(media_info)
 
-    # lsmash does not work with vc-1
-    # is_vc1 = media_info.video_tracks[0].format == "VC-1"
+    ffmpeg_video_options = get_crop_parameters(filename, media_info)
+
+    logging.info(f"Got video Options: {ffmpeg_video_options}")
 
     av1an_args = [
         "av1an",
@@ -118,13 +120,86 @@ def build_ffmpeg_options(media_info: MediaInfo) -> str:
     return options
 
 
+def get_video_duration(media_info):
+    """
+    Get the duration of the video in seconds using mediainfo.
+    """
+
+    duration = float(media_info.video_tracks[0].duration) / 1000
+    logging.info(f"Video Duration is: {duration}")
+    return duration
+
+
+def get_crop_parameters_at_time(video_file, timestamp):
+    """
+    Find the crop parameters at a specific timestamp using ffmpeg's cropdetect filter.
+    """
+    # Run ffmpeg with the cropdetect filter at a specific timestamp
+    command = [
+        "ffmpeg",
+        "-ss",
+        str(timestamp),
+        "-i",
+        video_file,
+        "-vf",
+        "cropdetect=24:16:0",
+        "-vframes",
+        "3000",
+        "-f",
+        "null",
+        "-",
+    ]
+
+    result = subprocess.run(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    output = result.stderr.decode("utf-8")
+
+    # Find the last occurrence of the crop parameter in the output
+    crop_params = None
+    for line in output.split("\n"):
+        if "crop=" in line:
+            crop_params = line
+
+    # Extract the crop parameters using regex
+    if crop_params:
+        match = re.search(r"crop=(\d+:\d+:\d+:\d+)", crop_params)
+        if match:
+            return match.group(1)
+
+    return None
+
+
+def get_crop_parameters(video_file, media_info, num_samples=5):
+    """
+    Get crop parameters by analyzing the video at multiple random timestamps.
+    If no params are found or they vary an empty string is returned.
+    """
+    duration = get_video_duration(media_info)
+    crop_params_list = []
+
+    for _ in range(num_samples):
+        timestamp = random.uniform(0, duration)
+        crop_params = get_crop_parameters_at_time(video_file, timestamp)
+        logging.info(f"Got Crop: {crop_params}")
+        if crop_params:
+            crop_params_list.append(crop_params)
+
+    if not crop_params_list:
+        return ""
+
+    if all(x == crop_params_list[0] for x in crop_params_list):
+        logging.info("All Crops are identical cropping Video")
+        return crop_params[0]
+    logging.info("Crops differ not cropping Video")
+    return ""
+
+
 def process_queue(file_queue, in_folder, out_folder):
     while True:
         if not file_queue.empty():
             file_path = file_queue.get()
             in_path = os.path.join(in_folder, file_path)
             out_path = os.path.join(out_folder, file_path)
-            process_single_file(in_path, "", out_path)
+            process_single_file(in_path, out_path)
             file_queue.task_done()
 
 
