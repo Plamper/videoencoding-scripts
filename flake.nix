@@ -13,11 +13,18 @@
         let
           overlays = [ (import vs-overlay) ];
           pkgs = import nixpkgs {
-            inherit system overlays;
+            inherit system overlays; config.allowUnfree = true;
           };
-          vapour = pkgs.vapoursynth.withPlugins [
-            pkgs.ffms
+          vapourPlugins = with pkgs; [
+            ffms
+            vapoursynth-mvtools
+            vapoursynthPlugins.vsutil
+            vapoursynthPlugins.havsfunc
+            vapoursynthPlugins.removegrain
           ];
+
+          vapour = pkgs.vapoursynth.withPlugins vapourPlugins;
+          vsedit = pkgs.vapoursynth-editor.withPlugins vapourPlugins;
 
           python = pkgs.python3.withPackages
             (ps: with ps; [
@@ -26,7 +33,7 @@
               watchdog
             ]
             );
-          svt-av1-psy = pkgs.callPackage ./pkgs/svt-av1-psy.nix {};
+          svt-av1-psy = pkgs.callPackage ./pkgs/svt-av1-psy.nix { };
         in
         with pkgs;
         {
@@ -53,6 +60,7 @@
               python
               mkvtoolnix-cli
               ffms
+              vsedit
             ];
           };
         }

@@ -48,7 +48,7 @@ def process_single_file(filename, output_filename):
         ffmpeg_audio_options,
         # --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 will force BT709
         "-v",
-        "--preset 4 --crf 20  --variance-boost-strength 2 --variance-octile 6 --film-grain 5 --lp 2 --keyint 0 --scd 0 --input-depth 10 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 ",
+        "--preset 4 --crf 16 --tune 3 --sharpness 1 --frame-luma-bias 20 --film-grain 5 --lp 2 --keyint 0 --scd 0 --input-depth 10 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1",
     ]
 
     av1an_process = subprocess.Popen(av1an_args)
