@@ -8,6 +8,7 @@ from watchdog.events import FileSystemEventHandler
 import logging
 import re
 import random
+import resource
 
 
 def process_single_file(filename, output_filename):
@@ -15,7 +16,8 @@ def process_single_file(filename, output_filename):
 
     ffmpeg_audio_options = build_ffmpeg_options(media_info)
 
-    ffmpeg_video_options = get_crop_parameters(filename, media_info)
+    # ffmpeg_video_options = get_crop_parameters(filename, media_info)
+    ffmpeg_video_options = "-vf crop=1920:796:0:144"
 
     logging.info(f"Got video Options: {ffmpeg_video_options}")
 
@@ -48,8 +50,12 @@ def process_single_file(filename, output_filename):
         ffmpeg_audio_options,
         # --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 will force BT709
         "-v",
-        "--preset 4 --crf 16 --tune 3 --sharpness 1 --frame-luma-bias 20 --film-grain 5 --lp 2 --keyint 0 --scd 0 --input-depth 10 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1",
+        "--preset 4 --crf 20 --tune 3 --sharpness 1 --frame-luma-bias 20 --film-grain 15 --lp 2 --keyint 0 --scd 0 --input-depth 10 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1",
     ]
+
+    # Avoid error when too many chunks
+    soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (8096, hard_limit))
 
     av1an_process = subprocess.Popen(av1an_args)
 
@@ -142,9 +148,9 @@ def get_crop_parameters_at_time(video_file, timestamp):
         "-i",
         video_file,
         "-vf",
-        "cropdetect=24:16:0",
+        "cropdetect=24:4:0",
         "-vframes",
-        "3000",
+        "240",
         "-f",
         "null",
         "-",
@@ -168,7 +174,7 @@ def get_crop_parameters_at_time(video_file, timestamp):
     return None
 
 
-def get_crop_parameters(video_file, media_info, num_samples=5):
+def get_crop_parameters(video_file, media_info, num_samples=30):
     """
     Get crop parameters by analyzing the video at multiple random timestamps.
     If no params are found or they vary an empty string is returned.
