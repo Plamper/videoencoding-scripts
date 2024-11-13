@@ -16,8 +16,8 @@ def process_single_file(filename, output_filename):
 
     ffmpeg_audio_options = build_ffmpeg_options(media_info)
 
-    # ffmpeg_video_options = get_crop_parameters(filename, media_info)
-    ffmpeg_video_options = "-vf crop=1920:796:0:144"
+    ffmpeg_video_options = get_crop_parameters(filename, media_info)
+    # ffmpeg_video_options = "-vf crop=1920:800:0:140"
 
     logging.info(f"Got video Options: {ffmpeg_video_options}")
 
